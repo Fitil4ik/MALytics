@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ua">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MALytics</title>
+</head>
+<body>
+  <main class="card">
+    <h1>MALytics</h1>
+    <p class="hint">Введіть посилання на профіль MAL або просто ім'я профілю</p>
+
+    <div class="form-row">
+      <input id="inputUser" type="text" placeholder="Посилання на профіль або ім'я користувача">
+      <button id="btnFetch">Отримати</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div id="result" class="result"></div>
+  </main>
+
+  <script>
+  const input = document.getElementById('inputUser');
+  const btn = document.getElementById('btnFetch');
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+
+  function extractUsername(value){
+    value = value.trim();
+    if(!value) return '';
+    try{
+      const u = new URL(value);
+      const parts = u.pathname.split('/').filter(Boolean);
+      const idx = parts.findIndex(p => p === 'profile' || p === 'animelist' || p === 'users');
+      if(idx >= 0 && parts.length > idx+1) return parts[idx+1];
+      return parts[parts.length-1] || '';
+    }catch(e){
+      return value.split('/').filter(Boolean).pop();
+    }
+  }
+
+  function renderList(data){
+    result.innerHTML = '';
+    if(!data) return;
+    const header = document.createElement('div');
+    header.className = 'summary';
+    header.textContent = `Профіль: ${data.username} — знайдено: ${data.total}`;
+    result.appendChild(header);
+
+    const ul = document.createElement('ul');
+    ul.className = 'anime-list';
+    data.list.forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${item.title}</strong> — Оцінка: ${item.score} <span class="genres">${(item.genres||[]).join(', ')}</span>`;
+      ul.appendChild(li);
+    });
+    result.appendChild(ul);
+  }
+
+  async function fetchList(){
+    const raw = input.value;
+    const username = extractUsername(raw);
+    if(!username){ status.textContent = 'Введіть ім\'я профілю.'; return; }
+    status.textContent = 'Завантаження...';
+    result.innerHTML = '';
+    try{
+      const url = `http://127.0.0.1:8000/get_list?username=${encodeURIComponent(username)}`;
+
+      const resp = await fetch(url);
+      if(!resp.ok){
+        status.textContent = `Помилка сервера: ${resp.status}`;
+        return;
+      }
+      const data = await resp.json();
+      status.textContent = '';
+      renderList(data);
+    }catch(err){
+      status.textContent = 'Помилка підключення. Переконайтесь, що запущено backend.';
+      console.error(err);
+    }
+  }
+
+  btn.addEventListener('click', fetchList);
+  input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') fetchList(); });
+  </script>
+</body>
+</html>
