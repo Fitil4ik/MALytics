@@ -5,6 +5,8 @@ const cors = require('cors');
 
 const app = express();
 const PORT = 8000;
+const cache = new Map();
+const cacheLife = 1000*600; // 10 min
 
 app.use(cors());
 
@@ -15,6 +17,17 @@ app.get('/get_list', async (req, res) => {
 
     if (!username) {
         return res.status(400).json({ error: "Username is required" });
+    }
+    const cached = cache.get(username);
+    if (cached) {
+        const age = Date.now() - cached.timestamp;
+        if (age < cacheLife) {
+            console.log(`Showing cached info for user ${username} (${age}ms)`);
+            return res.json(cached.data);
+        }
+        else {
+            cache.delete(username);
+        }
     }
 
     let allAnime = [];
