@@ -22,7 +22,7 @@ app.get('/get_list', async (req, res) => {
     if (cached) {
         const age = Date.now() - cached.timestamp;
         if (age < cacheLife) {
-            console.log(`Showing cached info for user ${username} (${age}ms)`);
+            console.log(`Знайдено кешовані дані для ${username} (${(age/1000).toFixed(1)}s)`);
             return res.json(cached.data);
         }
         else {
@@ -78,6 +78,7 @@ app.get('/get_list', async (req, res) => {
             total: allAnime.length,
             list: allAnime
         });
+        cache.set(username, { data: {username, total: allAnime.length, list: allAnime}, timestamp: Date.now() });
 
     } catch (error) {
         console.error("Помилка API:", error.response?.status || error.message);
