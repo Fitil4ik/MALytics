@@ -2,6 +2,7 @@ require('dotenv').config();
 const getList = require('./utils/getList');
 const express = require('express');
 const cors = require('cors');
+const calcPref = require('./utils/calcPref');
 
 const app = express();
 const PORT = 8000;
@@ -24,11 +25,11 @@ app.get('/get_list', async (req, res) => {
     try {
         const bdpq = await getList(username);
         const allAnime = Array.from(bdpq.bundleMap.values()).map(bundle => bundle.title);
-        const topGenres = require('./utils/calcFavGenres');
+        const topGenres = calcPref(allAnime);
         const responseData = {
             username: username,
             total: allAnime.length,
-            top_genres: topGenres(allAnime),
+            top_genres: topGenres,
             list: allAnime,
             stats: {
                 highest_rated: bdpq.peek('highest'),
@@ -37,7 +38,15 @@ app.get('/get_list', async (req, res) => {
                 last_added: bdpq.peek('newest')
             }
         };
-        console.log(`Успіх! Всього зібрано для ${username}: ${allAnime.length}`);
+        console.log(`Успіх! Всього зібрано для ${username}: ${allAnime.length}. Всього жанрів: ${topGenres.length}`);
+        if (Array.isArray(topGenres) && topGenres.length) {
+            console.log('Жанри за пріоритетом:');
+            topGenres.slice(0, 10).forEach(g => {
+                console.log(`- ${g.name}: ${g.weightedRank} (Рейтинг.: ${g.rawAverage}, кількість: ${g.count})`);
+            });
+        } else {
+            console.log('Статистика жанрів недоступна.');
+        }
         
         cache.set(username, { data: responseData, timestamp: Date.now() });
         res.json(responseData);
