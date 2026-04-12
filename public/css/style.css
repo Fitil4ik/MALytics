@@ -97,7 +97,6 @@ button#btnFetch:active {
     transform: scale(0.95);
 }
 
-/* Список аніме */
 .result {
     margin-top: 3rem;
     text-align: left;
