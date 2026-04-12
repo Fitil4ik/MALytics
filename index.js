@@ -42,7 +42,7 @@ app.get('/get_list', async (req, res) => {
         if (Array.isArray(topGenres) && topGenres.length) {
             console.log('Жанри за пріоритетом:');
             topGenres.slice(0, 10).forEach(g => {
-                console.log(`- ${g.name}: ${g.weightedRank} (Рейтинг.: ${g.rawAverage}, кількість: ${g.count})`);
+                console.log(`- ${g.name}: ${g.weightedRank} (Рейтинг: ${g.rawAverage}, кількість: ${g.count})`);
             });
         } else {
             console.log('Статистика жанрів недоступна.');

@@ -7,17 +7,14 @@
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <main class="card">
-    <h1>MALytics</h1>
-    <p class="hint">Введіть посилання на профіль MAL або просто ім'я профілю</p>
-
+  <main class="container">
+    <h1>MAL<span>ytics</span></h1>
+    <p class="hint">Персональні рекомендації аніме на основі твого профілю MyAnimeList</p>
     <div class="form-row">
-      <input id="inputUser" type="text" placeholder="Посилання на профіль або ім'я користувача">
+      <input id="inputUser" type="text" placeholder="Встав посилання на профіль або нікнейм MAL">
       <button id="btnFetch">Отримати</button>
     </div>
-
     <div id="status" class="status"></div>
-
     <div id="result" class="result"></div>
   </main>
 
@@ -41,33 +38,37 @@
     }
   }
 
-  function renderList(data){
-    result.innerHTML = '';
-    if(!data) return;
-    const header = document.createElement('div');
-    header.className = 'summary';
-    header.textContent = `Профіль: ${data.username} — знайдено: ${data.total}`;
-    result.appendChild(header);
-
-    const ul = document.createElement('ul');
-    ul.className = 'anime-list';
-    data.list.forEach(item => {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${item.title}</strong> — Оцінка: ${item.score} <span class="genres">${(item.genres||[]).join(', ')}</span>`;
-      ul.appendChild(li);
-    });
-    result.appendChild(ul);
-  }
+function renderList(data){
+      result.innerHTML = '';
+      if(!data) return;
+      const header = document.createElement('div');
+      header.className = 'summary';
+      header.textContent = `Профіль: ${data.username} — знайдено: ${data.total}`;
+      result.appendChild(header);
+      const ul = document.createElement('ul');
+      ul.className = 'anime-list';
+      data.list.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div>
+            <strong>${item.title}</strong>
+            <span class="genres">${(item.genres||[]).join(', ')}</span>
+          </div>
+          <span class="score-badge">${item.score}/10</span>
+        `;
+        ul.appendChild(li);
+      });
+      result.appendChild(ul);
+    }
 
   async function fetchList(){
     const raw = input.value;
     const username = extractUsername(raw);
     if(!username){ status.textContent = 'Введіть ім\'я профілю.'; return; }
-    status.textContent = 'Завантаження...';
+    status.innerHTML = '<div class="spinner"></div> <span>Завантаження...</span>';
     result.innerHTML = '';
     try{
       const url = `http://127.0.0.1:8000/get_list?username=${encodeURIComponent(username)}`;
-
       const resp = await fetch(url);
       if(!resp.ok){
         status.textContent = `Помилка сервера: ${resp.status}`;
