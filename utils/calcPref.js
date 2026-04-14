@@ -21,7 +21,7 @@ function calcPref(allAnime) {
 
     if (globalCount === 0) return [];
     const globalAvg = globalTotalScore / globalCount;
-    const K = 20; 
+    const K = 35; 
     const genreAverages = Object.keys(genreStats).map(genre => {
         const stats = genreStats[genre];
         const weightedScore = (stats.totalScore + K * globalAvg) / (stats.count + K);
