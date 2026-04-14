@@ -26,6 +26,12 @@ body {
     justify-content: center;
     padding-top: 5rem;
     min-height: 100vh;
+    align-items: center;
+    flex-direction: column;
+}
+
+main.container {
+    flex: 1 0 auto;
 }
 
 .container {
@@ -179,4 +185,27 @@ button#btnFetch:active {
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+.footer {
+    flex: 0 0 auto;
+    width: 100%;
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    margin-top: 4rem;
+}
+
+.footer-inner {
+    max-width: 672px;
+    margin: 0 auto;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.accent-footer {
+    color: var(--accent);
+    font-weight: 600;
 }
