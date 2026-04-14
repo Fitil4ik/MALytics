@@ -9,7 +9,7 @@ async function getList(username) {
     let params = {
         status: 'completed',
         limit: 100,
-        fields: 'list_status{score},genres'
+        fields: 'list_status{score},genres,alternative_titles'
     };
     const headers = { 'X-MAL-CLIENT-ID': MAL_CLIENT_ID };
 
@@ -25,9 +25,11 @@ async function getList(username) {
         if (nodes.length === 0) break;
 
         nodes.forEach(item => {
+            const enTitle = item.node.alternative_titles?.en;
+            const finalTitle = (enTitle && enTitle.trim()) ? enTitle : item.node.title;
             const anime = {
                 id: item.node.id,
-                title: item.node.title,
+                title: finalTitle,
                 score: item.list_status?.score || 0,
                 genres: item.node.genres ? item.node.genres.map(g => g.name) : []
             };
