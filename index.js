@@ -1,8 +1,9 @@
-require('dotenv').config();
 const getList = require('./utils/getList');
 const express = require('express');
 const cors = require('cors');
 const calcPref = require('./utils/calcPref');
+const { all } = require('axios');
+const BiDirectionalPriorityQueue = require('./utils/bdpq');
 
 const app = express();
 const PORT = 8000;
@@ -23,8 +24,12 @@ app.get('/get_list', async (req, res) => {
     if (cached) return;
 
     try {
-        const bdpq = await getList(username);
-        const allAnime = Array.from(bdpq.bundleMap.values()).map(bundle => bundle.title);
+        const bdpq = new BiDirectionalPriorityQueue();
+        const allAnime = [];
+        for await (const anime of getList(username)) {
+            bdpq.enqueue(anime, anime.score);
+            allAnime.push(anime);
+        }
         const topGenres = calcPref(allAnime);
         const responseData = {
             username: username,

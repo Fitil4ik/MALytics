@@ -1,3 +1,4 @@
+const BiDirectionalPriorityQueue = require('./bdpq');
 function calcPref(allAnime) {
     const genreStats = {};
     let globalTotalScore = 0;
@@ -22,16 +23,24 @@ function calcPref(allAnime) {
     if (globalCount === 0) return [];
     const globalAvg = globalTotalScore / globalCount;
     const K = 35; 
-    const genreAverages = Object.keys(genreStats).map(genre => {
+    const bdpq = new BiDirectionalPriorityQueue();
+    let uniqueGenres = 0;
+    Object.keys(genreStats).forEach(genre => {
         const stats = genreStats[genre];
         const weightedScore = (stats.totalScore + K * globalAvg) / (stats.count + K);
-        return {
+        const genreData = {
             name: genre,
             rawAverage: Math.round((stats.totalScore / stats.count) * 100) / 100,
             weightedRank: Math.round(weightedScore * 100) / 100,
             count: stats.count
         };
+        bdpq.enqueue(genreData, genreData.weightedRank);
+        uniqueGenres++;
     });
-    return genreAverages.sort((a, b) => b.weightedRank - a.weightedRank);
+    const genreAverages = [];
+    for (let i = 0; i < uniqueGenres; i++) {
+        genreAverages.push(bdpq.dequeue('highest'));
+    }
+    return genreAverages
 }
 module.exports = calcPref;
