@@ -53,9 +53,14 @@ function renderList(data){
       result.appendChild(header);
       const ul = document.createElement('ul');
       ul.className = 'anime-list';
+      
+      const fragment = document.createDocumentFragment();
       const sortlist = [...data.list].sort((a,b) => b.score - a.score);
+      
       sortlist.forEach(item => {
-        const translatedGenres = (item.genres || []).map(g => genreTranslations[g] || g);
+        const translatedGenres = (item.genres || []).map(g => 
+            (typeof genreTranslations !== 'undefined' && genreTranslations[g]) ? genreTranslations[g] : g
+        );
         const li = document.createElement('li');
         li.innerHTML = `
           <div>
@@ -64,8 +69,10 @@ function renderList(data){
           </div>
           <span class="score-badge">${item.score}/10</span>
         `;
-        ul.appendChild(li);
+        fragment.appendChild(li);
       });
+      
+      ul.appendChild(fragment);
       result.appendChild(ul);
     }
 
