@@ -2,7 +2,8 @@ const getList = require('./utils/getList');
 const express = require('express');
 const cors = require('cors');
 const calcPref = require('./utils/calcPref');
-const { all } = require('axios');
+const { logger, withLogging } = require('./utils/logger');
+const malProxy = require('./utils/malProxy');
 const BiDirectionalPriorityQueue = require('./utils/bdpq');
 
 const app = express();
@@ -12,6 +13,8 @@ const cacheLife = 1000 * 600;
 
 app.use(cors());
 app.use(express.static('public'));
+
+const calcPrefLogged = withLogging(calcPref, 'DEBUG');
 
 app.get('/get_list', async (req, res) => {
     const { username } = req.query;
@@ -23,14 +26,17 @@ app.get('/get_list', async (req, res) => {
     const cached = require('./utils/getCache')(username, cache, cacheLife, res);
     if (cached) return;
 
+    logger.info(`Початок завантаження профілю: ${username}...`);
+
     try {
         const bdpq = new BiDirectionalPriorityQueue();
         const allAnime = [];
-        for await (const anime of getList(username)) {
+        for await (const anime of getList(username)) {  
             bdpq.enqueue(anime, anime.score);
             allAnime.push(anime);
         }
-        const topGenres = calcPref(allAnime);
+         logger.info(`Успіх! Всього зібрано для ${username}: ${allAnime.length}.`);
+        const topGenres = await calcPrefLogged(allAnime);
         const responseData = {
             username: username,
             total: allAnime.length,
@@ -43,21 +49,21 @@ app.get('/get_list', async (req, res) => {
                 last_added: bdpq.peek('newest')
             }
         };
-        console.log(`Успіх! Всього зібрано для ${username}: ${allAnime.length}. Всього жанрів: ${topGenres.length}`);
         if (Array.isArray(topGenres) && topGenres.length) {
-            console.log('Жанри за пріоритетом:');
+            logger.debug('Жанри за пріоритетом:');
             topGenres.slice(0, 10).forEach(g => {
-                console.log(`- ${g.name}: ${g.weightedRank} (Середній: ${g.rawAverage}, кількість: ${g.count})`);
+                logger.debug(`- ${g.name}: ${g.weightedRank} (Середній: ${g.rawAverage}, кількість: ${g.count})`);
             });
         } else {
-            console.log('Статистика жанрів недоступна.');
+            logger.debug('Статистика жанрів недоступна.');
         }
         
         cache.set(username, { data: responseData, timestamp: Date.now() });
+        malProxy.setCooldown(5000);
         res.json(responseData);
         } 
         catch (error) {
-        console.error("Помилка API:", error.response?.status || error.message);
+        logger.error(`Помилка: ${error.response?.status || error.message}`);
         const status = error.response?.status || 500;
         res.status(status).json({
             error: "Error fetching data from MyAnimeList",

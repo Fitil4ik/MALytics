@@ -1,24 +1,21 @@
-require('dotenv').config();
-const BiDirectionalPriorityQueue = require('./bdpq');
-const axios = require('axios');
-const MAL_CLIENT_ID = process.env.MAL_CLIENT_ID;
+const malProxy = require('./malProxy'); 
+const { logger } = require('./logger');
 
 async function* getList(username) {
-    const bdpq = new BiDirectionalPriorityQueue();
     let currentUrl = `https://api.myanimelist.net/v2/users/${username}/animelist`;
     let params = {
         status: 'completed',
         limit: 100,
         fields: 'list_status{score},genres,alternative_titles'
     };
-    const headers = { 'X-MAL-CLIENT-ID': MAL_CLIENT_ID };
+
+    let page = 1;
 
     while (currentUrl) {
-        console.log(`--> Завантаження сторінки... Всього отримано: ${bdpq.bundleMap.size}`);
+        logger.debug(`--> Завантаження сторінки... ${page}...`);
 
         try {
-            const response = await axios.get(currentUrl, {
-                headers,
+            const response = await malProxy.get(currentUrl, {
                 params: params || {}
             });
 
@@ -39,10 +36,10 @@ async function* getList(username) {
 
             currentUrl = response.data.paging?.next || null;
             params = null;
+            page++;
         }
         catch (error) {
-            console.error("Помилка при отриманні даних:", error.response?.status || error.message);
-            break;
+            throw error;
         }
     }
 }
