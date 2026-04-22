@@ -5,6 +5,7 @@ const calcPref = require('./utils/calcPref');
 const { logger, withLogging } = require('./utils/logger');
 const malProxy = require('./utils/malProxy');
 const BiDirectionalPriorityQueue = require('./utils/bdpq');
+const eventBus = require('./utils/eventManager');
 
 const app = express();
 const PORT = 8000;
@@ -49,16 +50,7 @@ app.get('/get_list', async (req, res) => {
                 last_added: bdpq.peek('newest')
             }
         };
-        if (Array.isArray(topGenres) && topGenres.length) {
-            logger.debug('Жанри за пріоритетом:');
-            topGenres.slice(0, 10).forEach(g => {
-                logger.debug(`- ${g.name}: ${g.weightedRank} (Середній: ${g.rawAverage}, кількість: ${g.count})`);
-            });
-        } else {
-            logger.debug('Статистика жанрів недоступна.');
-        }
-        
-        cache.set(username, { data: responseData, timestamp: Date.now() });
+        eventBus.emit('profile_ready', { username, responseData, cache });
         malProxy.setCooldown(5000);
         res.json(responseData);
         } 
