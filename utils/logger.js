@@ -11,26 +11,39 @@ const logger = {
 };
 
 function withLogging(fn, level = 'INFO') {
-    return async function (...args) {
+    return function (...args) {
         const reqLevel = Levels[level];
         const currentLevel = Levels[Config.LEVEL];
+        const isErrorLevel = level === 'ERROR';
 
-        if (currentLevel <= reqLevel) {
+        if (currentLevel <= reqLevel && !isErrorLevel) {
             const safeArgs = args.map(a => typeof a === 'object' ? '[Object/Array]' : a);
             logger[level.toLowerCase()](`Виклик [${fn.name}] з аргументами: ${safeArgs.join(', ')}`);
         }
 
         const start = performance.now();
         try {
-            const result = await fn(...args);
-            const end = performance.now();
-            
-            if (currentLevel <= reqLevel) {
-                logger[level.toLowerCase()](`[${fn.name}] успішно виконано за ${(end - start).toFixed(2)}ms`);
+            const result = fn(...args);
+
+            if (result instanceof Promise) {
+                return result.then(res => {
+                    if (currentLevel <= reqLevel && !isErrorLevel) {
+                        logger[level.toLowerCase()](`[${fn.name}] виконано за ${(performance.now() - start).toFixed(2)}ms`);
+                    }
+                    return res;
+                }).catch(err => {
+                    if (currentLevel <= Levels.ERROR) logger.error(`[${fn.name}] Помилка: ${err.message}`);
+                    throw err;
+                });
+            }
+
+            if (currentLevel <= reqLevel && !isErrorLevel) {
+                logger[level.toLowerCase()](`[${fn.name}] виконано за ${(performance.now() - start).toFixed(2)}ms`);
             }
             return result;
-        } catch (err) {
-            logger.error(`[${fn.name}] впала з помилкою: ${err.message}`);
+
+            } catch (err) {
+            if (currentLevel <= Levels.ERROR) logger.error(`[${fn.name}] Помилка: ${err.message}`);
             throw err;
         }
     };
