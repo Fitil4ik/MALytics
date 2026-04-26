@@ -3,11 +3,11 @@ const Config = {
 };
 
 const Levels = { DEBUG: 1, INFO: 2, ERROR: 3 };
-
+const getIsoTime = () => new Date().toISOString();
 const logger = {
-    debug: (msg) => { if (Levels[Config.LEVEL] <= Levels.DEBUG) console.log(`[DEBUG] ${new Date().toLocaleTimeString()} - ${msg}`); },
-    info: (msg) => { if (Levels[Config.LEVEL] <= Levels.INFO) console.log(`[INFO] ${new Date().toLocaleTimeString()} - ${msg}`); },
-    error: (msg) => { if (Levels[Config.LEVEL] <= Levels.ERROR) console.error(`[ERROR] ${new Date().toLocaleTimeString()} - ${msg}`); }
+    debug: (msg) => { if (Levels[Config.LEVEL] <= Levels.DEBUG) console.log(`[DEBUG] ${getIsoTime()} - ${msg}`); },
+    info: (msg) => { if (Levels[Config.LEVEL] <= Levels.INFO) console.log(`[INFO] ${getIsoTime()} - ${msg}`); },
+    error: (msg) => { if (Levels[Config.LEVEL] <= Levels.ERROR) console.error(`[ERROR] ${getIsoTime()} - ${msg}`); }
 };
 
 function withLogging(fn, level = 'INFO') {
