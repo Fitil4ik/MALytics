@@ -1,26 +1,28 @@
 const EventEmitter = require('events');
 const { logger } = require('./logger');
 
-const eventBus = new EventEmitter();
+class SafeEventBus extends EventEmitter {
+    emit(eventName, ...args) {
+        const listeners = this.listeners(eventName);
+        
+        if (listeners.length === 0 && eventName === 'error') {
+            logger.error(`[EventBus] Увага: Неперехоплена помилка - ${args[0]}`);
+            return false;
+        }
 
-function updateCache({ username, responseData, cache }) {
-    cache.set(username, { data: responseData, timestamp: Date.now() });
-    logger.debug(`[Cache Manager] Дані для ${username} успішно збережено в кеш.`);
-}
-
-function logAnalytics({ responseData }) {
-    const topGenres = responseData.top_genres;
-    if (Array.isArray(topGenres) && topGenres.length) {
-        logger.debug(`[Analytics] Жанри за пріоритетом (всього знайдено ${topGenres.length}):`);
-        topGenres.slice(0, 10).forEach(g => {
-            logger.debug(`- ${g.name}: ${g.weightedRank} (Середній: ${g.rawAverage}, кількість: ${g.count})`);
-        });
-    } else {
-        logger.debug(`[Analytics] Статистика жанрів недоступна.`);
+        let handled = false;
+        for (const listener of listeners) {
+            try {
+                listener.apply(this, args);
+                handled = true;
+            } catch (err) {
+                this.emit('error', err);
+            }
+        }
+        return handled;
     }
 }
 
-eventBus.on('profile_ready', updateCache);
-eventBus.on('profile_ready', logAnalytics);
+const eventBus = new SafeEventBus();
 
 module.exports = eventBus;
