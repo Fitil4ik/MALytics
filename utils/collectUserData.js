@@ -3,11 +3,11 @@ const getList = require('./getList');
 const calcPrefLogged = require('./calcPref');
 const { logger } = require('./logger');
 
-async function collectUserData(username) {
+async function collectUserData(username, malClient) {
     logger.info(`Початок завантаження профілю: ${username}...`);
     const bdpq = new BiDirectionalPriorityQueue();
         const allAnime = [];
-        for await (const anime of getList(username)) {  
+        for await (const anime of getList(username, malClient)) {  
             bdpq.enqueue(anime, anime.score);
             allAnime.push(anime);
         }

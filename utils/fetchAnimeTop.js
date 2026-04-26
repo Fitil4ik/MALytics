@@ -1,7 +1,6 @@
-const malProxy = require('./malProxy');
 const { logger } = require('./logger');
 
-async function fetchTopAnime() {
+async function fetchTopAnime(proxyClient) {
     logger.info('Завантаження Топ-1000 аніме з MAL...');
     const topAnime = [];
     const limit = 100;
@@ -15,11 +14,15 @@ async function fetchTopAnime() {
                 offset: offset,
                 fields: 'genres,alternative_titles'
             };
+            const query = new URLSearchParams(params).toString();
 
             logger.debug(`Завантаження топ-1000 (позиції ${offset + 1}-${offset + limit})...`);
-            const response = await malProxy.get(url, { params });
+            const response = await proxyClient.request({
+                url: `${url}?${query}`,
+                method: 'GET'
+            });
             
-            const nodes = response.data.data || [];
+            const nodes = response.data || [];
             if (nodes.length === 0) break;
 
             for (const item of nodes) {

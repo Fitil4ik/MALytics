@@ -1,14 +1,13 @@
-const { logger } = require('./logger');
-const axios = require('axios');
-require('dotenv').config();
+const { logger } = require('../logger');
 
 class MALAuthProxy {
-    constructor() {
-        this.clientId = process.env.MAL_CLIENT_ID;
+    constructor(httpClient, clientId) {
+        this.httpClient = httpClient;
+        this.clientId = clientId;
         this.cooldownUntil = 0; 
     }
 
-    async get(url, config = {}) {
+    async request(req) {
         const now = Date.now();
         if (now < this.cooldownUntil) {
             const waitTime = this.cooldownUntil - now;
@@ -16,18 +15,18 @@ class MALAuthProxy {
             await new Promise(resolve => setTimeout(resolve, waitTime));
         }
 
-        logger.debug(`[PROXY] Відправка запиту до: ${url}`);
+        logger.debug(`[PROXY] Відправка запиту до: ${req.url}`);
         
         try {
-            const proxyConfig = {
-                ...config,
+            const proxyReq = {
+                ...req,
                 headers: {
-                    ...config.headers,
+                    ...req.headers,
                     'X-MAL-CLIENT-ID': this.clientId,
                     'User-Agent': 'MALytics_Proxy/1.0'
                 }
             };
-            return await axios.get(url, proxyConfig);
+            return this.httpClient.request(proxyReq);
         } catch (error) {
             logger.error(`[PROXY ERROR] Помилка запиту — Статус: ${error.response?.status}`);
             throw error; 
@@ -40,4 +39,4 @@ class MALAuthProxy {
     }
 }
 
-module.exports = new MALAuthProxy();
+module.exports = MALAuthProxy;

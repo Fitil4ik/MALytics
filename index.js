@@ -1,8 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const calcPref = require('./utils/calcPref');
 const { logger, withLogging } = require('./utils/logger');
-const malProxy = require('./utils/malProxy');
+const httpClient = require('./utils/proxy/httpClient');
+const malProxy = require('./utils/proxy/malProxy');
 const eventBus = require('./utils/eventManager');
 const collectUserData = require('./utils/collectUserData');
 const cron = require('node-cron');
@@ -12,7 +14,10 @@ const app = express();
 const PORT = 8000;
 const cache = new Map();
 const cacheLife = 1000 * 600;
-const cached = require('./utils/getCache')(collectUserData, cache, cacheLife);
+const cached = require('./utils/getCache')((username) => collectUserData(username, malAuthProxy), cache, cacheLife);
+
+const baseClient = new httpClient();
+const malAuthProxy = new malProxy(baseClient, process.env.MAL_CLIENT_ID);
 
 app.use(cors());
 app.use(express.static('public'));
@@ -21,7 +26,7 @@ const calcPrefLogged = withLogging(calcPref, 'DEBUG');
 
 let globalTop1000 = [];
 async function updateTopAnime() {
-    const data = await fetchTopAnime();
+    const data = await fetchTopAnime(malAuthProxy);
     if (data && data.length > 0) {
         globalTop1000 = data;
         cache.set('TOP_1000', { data: globalTop1000, timestamp: Date.now() });
@@ -43,7 +48,7 @@ app.get('/get_list', async (req, res) => {
 
     try {
         const responseData = await cached(username);
-        malProxy.setCooldown(5000);
+        malAuthProxy.setCooldown(5000);
         res.json(responseData);
         } 
         catch (error) {

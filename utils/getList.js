@@ -1,7 +1,6 @@
-const malProxy = require('./malProxy'); 
 const { logger } = require('./logger');
 
-async function* getList(username) {
+async function* getList(username, malClient) {
     let currentUrl = `https://api.myanimelist.net/v2/users/${username}/animelist`;
     let params = {
         status: 'completed',
@@ -15,11 +14,16 @@ async function* getList(username) {
         logger.debug(`--> Завантаження сторінки... ${page}...`);
 
         try {
-            const response = await malProxy.get(currentUrl, {
-                params: params || {}
+            let reqUrl = currentUrl;
+            if (params) {
+                const query = new URLSearchParams(params).toString();
+                reqUrl = `${currentUrl}?${query}`;
+            }
+            const response = await malClient.request({
+                url: reqUrl, method: 'GET'
             });
 
-        const nodes = response.data.data || [];
+        const nodes = response.data || [];
         if (nodes.length === 0) break;
 
         for (const item of nodes) {
@@ -34,7 +38,7 @@ async function* getList(username) {
             yield anime;
         };
 
-            currentUrl = response.data.paging?.next || null;
+            currentUrl = response.paging?.next || null;
             params = null;
             page++;
         }
