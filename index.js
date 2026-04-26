@@ -4,7 +4,8 @@ const cors = require('cors');
 const calcPref = require('./utils/calcPref');
 const { logger, withLogging } = require('./utils/logger');
 const httpClient = require('./utils/proxy/httpClient');
-const malProxy = require('./utils/proxy/malProxy');
+const malAuthProxy = require('./utils/proxy/malProxy');
+const RateLimitProxy = require('./utils/proxy/rateLimitProxy');
 const eventBus = require('./utils/eventManager');
 const collectUserData = require('./utils/collectUserData');
 const cron = require('node-cron');
@@ -14,10 +15,11 @@ const app = express();
 const PORT = 8000;
 const cache = new Map();
 const cacheLife = 1000 * 600;
-const cached = require('./utils/getCache')((username) => collectUserData(username, malAuthProxy), cache, cacheLife);
+const cached = require('./utils/getCache')((username) => collectUserData(username, malClient), cache, cacheLife);
 
 const baseClient = new httpClient();
-const malAuthProxy = new malProxy(baseClient, process.env.MAL_CLIENT_ID);
+const authClient = new malAuthProxy(baseClient, process.env.MAL_CLIENT_ID);
+const malClient = new RateLimitProxy(authClient);
 
 app.use(cors());
 app.use(express.static('public'));
@@ -26,7 +28,7 @@ const calcPrefLogged = withLogging(calcPref, 'DEBUG');
 
 let globalTop1000 = [];
 async function updateTopAnime() {
-    const data = await fetchTopAnime(malAuthProxy);
+    const data = await fetchTopAnime(malClient);
     if (data && data.length > 0) {
         globalTop1000 = data;
         cache.set('TOP_1000', { data: globalTop1000, timestamp: Date.now() });
@@ -48,7 +50,7 @@ app.get('/get_list', async (req, res) => {
 
     try {
         const responseData = await cached(username);
-        malAuthProxy.setCooldown(5000);
+        malClient.setCooldown(5000);
         res.json(responseData);
         } 
         catch (error) {

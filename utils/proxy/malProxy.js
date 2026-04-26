@@ -4,19 +4,10 @@ class MALAuthProxy {
     constructor(httpClient, clientId) {
         this.httpClient = httpClient;
         this.clientId = clientId;
-        this.cooldownUntil = 0; 
     }
 
     async request(req) {
-        const now = Date.now();
-        if (now < this.cooldownUntil) {
-            const waitTime = this.cooldownUntil - now;
-            logger.debug(`[PROXY RATE LIMIT] Глобальний кулдаун. Чекаємо ${waitTime}ms...`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-        }
-
         logger.debug(`[PROXY] Відправка запиту до: ${req.url}`);
-        
         try {
             const proxyReq = {
                 ...req,
@@ -26,7 +17,7 @@ class MALAuthProxy {
                     'User-Agent': 'MALytics_Proxy/1.0'
                 }
             };
-            return this.httpClient.request(proxyReq);
+            return await this.httpClient.request(proxyReq);
         } catch (error) {
             logger.error(`[PROXY ERROR] Помилка запиту — Статус: ${error.response?.status}`);
             throw error; 
