@@ -1,4 +1,5 @@
 const { logger } = require('./logger');
+const { withRetry } = require('./retry');
 
 async function fetchTopAnime(proxyClient) {
     logger.info('Завантаження Топ-1000 аніме з MAL...');
@@ -17,10 +18,10 @@ async function fetchTopAnime(proxyClient) {
             const query = new URLSearchParams(params).toString();
 
             logger.debug(`Завантаження топ-1000 (позиції ${offset + 1}-${offset + limit})...`);
-            const response = await proxyClient.request({
+            const response = await withRetry(() => proxyClient.request({
                 url: `${url}?${query}`,
                 method: 'GET'
-            });
+            }), 3, 2000);
             
             const nodes = response.data || [];
             if (nodes.length === 0) break;

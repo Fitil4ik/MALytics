@@ -1,4 +1,5 @@
 const { logger } = require('./logger');
+const { withRetry } = require('./retry');   
 
 async function* getList(username, malClient) {
     let currentUrl = `https://api.myanimelist.net/v2/users/${username}/animelist`;
@@ -19,9 +20,10 @@ async function* getList(username, malClient) {
                 const query = new URLSearchParams(params).toString();
                 reqUrl = `${currentUrl}?${query}`;
             }
-            const response = await malClient.request({
-                url: reqUrl, method: 'GET'
-            });
+            const response = await withRetry(() => malClient.request({
+                url: reqUrl, 
+                method: 'GET'
+            }));
 
         const nodes = response.data || [];
         if (nodes.length === 0) break;
