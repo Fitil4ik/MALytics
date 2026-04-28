@@ -23,11 +23,6 @@ class MALAuthProxy {
             throw error; 
         }
     }
-
-    setCooldown(ms) {
-        this.cooldownUntil = Date.now() + ms;
-        logger.debug(`[PROXY] Активовано кулдаун на ${ms}ms для наступних запитів.`);
-    }
 }
 
 module.exports = MALAuthProxy;
