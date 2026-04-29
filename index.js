@@ -1,12 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const calcPref = require('./utils/calcPref');
 const { logger, withLogging } = require('./utils/logger');
 const httpClient = require('./utils/proxy/httpClient');
 const malAuthProxy = require('./utils/proxy/malProxy');
 const RateLimitProxy = require('./utils/proxy/rateLimitProxy');
-const eventBus = require('./utils/eventManager');
 const collectUserData = require('./utils/collectUserData');
 const cron = require('node-cron');
 const fetchTopAnime = require('./utils/fetchAnimeTop');
@@ -24,8 +22,6 @@ const malClient = new RateLimitProxy(authClient);
 
 app.use(cors());
 app.use(express.static('public'));
-
-const calcPrefLogged = withLogging(calcPref, 'DEBUG');
 
 let globalTop1000 = [];
 async function updateTopAnime() {
@@ -52,12 +48,6 @@ app.get('/get_list', async (req, res) => {
     try {
         const responseData = await cached(username);
         malClient.setCooldown(5000);
-        responseData.recommendations = getRecommendations(
-            responseData.username,
-            responseData.list, 
-            responseData.top_genres, 
-            globalTop1000
-        );
         res.json(responseData);
         } 
         catch (error) {
@@ -67,6 +57,32 @@ app.get('/get_list', async (req, res) => {
             error: "Error fetching data from MyAnimeList",
             details: error.message
         });
+    }
+});
+
+app.get('/get_recommendations', async (req, res) => {
+    const { username } = req.query;
+    if (!username) return res.status(400).json({ error: "Username is required" });
+
+    try {
+        const cachedData = cache.get(username);
+        if (!cachedData) {
+            return res.status(400).json({ error: "Дані не знайдені. Спочатку завантажте список." });
+        }
+        
+        const responseData = cachedData.data;
+        const recommendations = await getRecommendations(
+            responseData.username, 
+            responseData.list, 
+            responseData.top_genres, 
+            globalTop1000,
+            malClient
+        );
+
+        res.json({ recommendations });
+    } catch (error) {
+        logger.error(`[getRecommendations] Помилка: ${error.message}`);
+        res.status(500).json({ error: "Помилка генерації рекомендацій" });
     }
 });
 

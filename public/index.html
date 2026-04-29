@@ -132,50 +132,74 @@
   }
 
   btnAnalyze.addEventListener('click', async () => {
-    if(!currentData || !currentData.recommendations) return;
+    if(!currentData || !currentData.username) return;
     
     const originalBtnText = btnAnalyze.innerHTML;
-    btnAnalyze.innerHTML = '<div class="spinner"></div> <span>Завантаження...</span>';
+    btnAnalyze.innerHTML = '<div class="spinner"></div> <span>Аналіз...</span>';
     btnAnalyze.disabled = true;
 
-    recommendationsDiv.style.display = 'block';
-    recommendationsDiv.innerHTML = `<h2 class="rec-title"><span>///</span> Персональні рекомендації</h2>`;
+    recommendationsDiv.style.display = 'none';
     
-    const grid = document.createElement('div');
-    grid.className = 'rec-grid';
-    
-    for (const item of currentData.recommendations) {
-        const translatedSynopsis = await translateText(item.synopsis);
-        const translatedGenres = (item.genres || []).map(g => 
-            (typeof genreTranslations !== 'undefined' && genreTranslations[g]) ? genreTranslations[g] : g
-        );
-        const tagsHtml = translatedGenres.slice(0, 3).map(g => `<span class="rec-tag">${g}</span>`).join('');
+    try {
+        const url = `http://127.0.0.1:8000/get_recommendations?username=${encodeURIComponent(currentData.username)}`;
+        const resp = await fetch(url);
+        
+        if (!resp.ok) throw new Error('Помилка сервера');
+        
+        const data = await resp.json();
+        const recs = data.recommendations;
 
-        const card = document.createElement('div');
-        card.className = 'rec-card';
-        card.innerHTML = `
-            <div class="rec-img-wrapper">
-                <img src="${item.picture}" alt="${item.title}">
-                <div class="rec-badge-left">#${item.rank}</div>
-                <div class="rec-badge">${Math.round((item.matchScore / 25) * 100)}% Збіг</div>
-            </div>
-            <div class="rec-content">
-                <div class="rec-tags">${tagsHtml}</div>
-                <h3 class="rec-title-card">${item.title}</h3>
-                <p class="rec-desc" title="${translatedSynopsis}">${translatedSynopsis}</p>
-                <a href="https://myanimelist.net/anime/${item.id}" target="_blank" class="rec-link">
-                    Дивитися на MAL
+        if (!recs || recs.length === 0) {
+            alert('Не вдалося сформувати рекомендації для цього профілю.');
+            btnAnalyze.innerHTML = originalBtnText;
+            btnAnalyze.disabled = false;
+            return;
+        }
+
+        recommendationsDiv.style.display = 'block';
+        recommendationsDiv.innerHTML = `<h2 class="rec-title"><span>///</span> Персональні рекомендації</h2>`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'rec-grid';
+        
+        for (const item of recs) {
+            const translatedSynopsis = await translateText(item.synopsis);
+            const translatedGenres = (item.genres || []).map(g => 
+                (typeof genreTranslations !== 'undefined' && genreTranslations[g]) ? genreTranslations[g] : g
+            );
+            const tagsHtml = translatedGenres.slice(0, 3).map(g => `<span class="rec-tag">${g}</span>`).join('');
+
+            const card = document.createElement('div');
+            card.className = 'rec-card';
+            card.innerHTML = `
+                <div class="rec-img-wrapper">
+                    <img src="${item.picture}" alt="${item.title}">
+                    <div class="rec-badge-left">#${item.rank}</div>
+                    <div class="rec-badge">${Math.round((item.matchScore / 25) * 100)}% Збіг</div>
+                </div>
+                <div class="rec-content">
+                    <div class="rec-tags">${tagsHtml}</div>
+                    <h3 class="rec-title-card">${item.title}</h3>
+                    <p class="rec-desc" title="${translatedSynopsis}">${translatedSynopsis}</p>
+                    <a href="https://myanimelist.net/anime/${item.id}" target="_blank" class="rec-link">
+                        Дивитися на MAL
                     <i class="ph-bold ph-arrow-square-out" style="font-size: 1.25rem;"></i>
-                </a>
-            </div>
-        `;
-        grid.appendChild(card);
+                    </a>
+                </div>
+            `;
+            grid.appendChild(card);
+        }
+        
+        recommendationsDiv.appendChild(grid);
+        recommendationsDiv.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (error) {
+        console.error(error);
+        alert("Сталася помилка при отриманні рекомендацій.");
+    } finally {
+        btnAnalyze.innerHTML = originalBtnText;
+        btnAnalyze.disabled = false;
     }
-    
-    recommendationsDiv.appendChild(grid);
-    recommendationsDiv.scrollIntoView({ behavior: 'smooth' });
-    
-    btnAnalyze.innerHTML = originalBtnText;
   });
 
   btn.addEventListener('click', fetchList);
