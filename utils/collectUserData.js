@@ -4,7 +4,7 @@ const calcPrefLogged = require('./calcPref');
 const { logger } = require('./logger');
 
 async function collectUserData(username, malClient) {
-    logger.info(`Початок завантаження профілю: ${username}...`);
+    logger.info(`[collectUserData] Початок завантаження профілю: ${username}...`);
     const bdpq = new BiDirectionalPriorityQueue();
     const allAnime = [];
 
@@ -14,7 +14,7 @@ async function collectUserData(username, malClient) {
             allAnime.push(anime);
         }
         
-        logger.info(`Успіх! Всього зібрано для ${username}: ${allAnime.length}.`);
+        logger.info(`[collectUserData] Успіх! Всього зібрано для ${username}: ${allAnime.length}.`);
         
         const topGenres = await calcPrefLogged(allAnime);
         

@@ -10,6 +10,7 @@ const eventBus = require('./utils/eventManager');
 const collectUserData = require('./utils/collectUserData');
 const cron = require('node-cron');
 const fetchTopAnime = require('./utils/fetchAnimeTop');
+const getRecommendations = require('./utils/getRecommendations');
 
 const app = express();
 const PORT = 8000;
@@ -32,7 +33,7 @@ async function updateTopAnime() {
     if (data && data.length > 0) {
         globalTop1000 = data;
         cache.set('TOP_1000', { data: globalTop1000, timestamp: Date.now() });
-        logger.debug('База топ-1000 успішно оновлена та збережена в пам\'яті.');
+        logger.debug('[fetchTopAnime] База топ-1000 успішно оновлена та збережена в пам\'яті.');
     }
 }
 
@@ -51,6 +52,12 @@ app.get('/get_list', async (req, res) => {
     try {
         const responseData = await cached(username);
         malClient.setCooldown(5000);
+        responseData.recommendations = getRecommendations(
+            responseData.username,
+            responseData.list, 
+            responseData.top_genres, 
+            globalTop1000
+        );
         res.json(responseData);
         } 
         catch (error) {

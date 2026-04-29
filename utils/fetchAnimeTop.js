@@ -2,7 +2,7 @@ const { logger } = require('./logger');
 const { withRetry } = require('./retry');
 
 async function fetchTopAnime(proxyClient) {
-    logger.info('Завантаження Топ-1000 аніме з MAL...');
+    logger.info('[fetchAnimeTop] Завантаження Топ-1000 аніме з MAL...');
     const topAnime = [];
     const limit = 100;
     
@@ -13,11 +13,11 @@ async function fetchTopAnime(proxyClient) {
                 ranking_type: 'all',
                 limit: limit,
                 offset: offset,
-                fields: 'genres,alternative_titles'
+                fields: 'genres,alternative_titles,main_picture,synopsis'
             };
             const query = new URLSearchParams(params).toString();
 
-            logger.debug(`Завантаження топ-1000 (позиції ${offset + 1}-${offset + limit})...`);
+            logger.debug(`[fetchAnimeTop] Завантаження топ-1000 (позиції ${offset + 1}-${offset + limit})...`);
             const response = await withRetry(() => proxyClient.request({
                 url: `${url}?${query}`,
                 method: 'GET'
@@ -34,16 +34,18 @@ async function fetchTopAnime(proxyClient) {
                     rank: item.ranking?.rank,
                     id: item.node.id,
                     title: finalTitle,
-                    genres: item.node.genres ? item.node.genres.map(g => g.name) : []
+                    genres: item.node.genres ? item.node.genres.map(g => g.name) : [],
+                    picture: item.node.main_picture?.large || item.node.main_picture?.medium || '',
+                    synopsis: item.node.synopsis || 'Опис відсутній.'
                 });
             }
             await new Promise(resolve => setTimeout(resolve, 500));
         }
-        logger.info(`Успіх! Завантажено Топ-${topAnime.length} аніме.`);
+        logger.info(`[fetchAnimeTop] Успіх! Завантажено топ-${topAnime.length} аніме.`);
         return topAnime;
 
     } catch (error) {
-        logger.error(`Помилка при завантаженні Топ-1000: ${error.message}`);
+        logger.error(`[fetchAnimeTop] Помилка при завантаженні топ-1000: ${error.message}`);
         return null;
     }
 }

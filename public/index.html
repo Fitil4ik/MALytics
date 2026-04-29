@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>MALytics</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
   <main class="container">
@@ -16,7 +17,14 @@
     </div>
     <div id="status" class="status"></div>
     <div id="result" class="result"></div>
+    <div class="analyze-container">
+        <button id="btnAnalyze" class="btn-analyze" disabled>
+            <i class="ph-fill ph-flask pulse-icon"></i>
+            Проаналізувати
+        </button>
+    </div>
   </main>
+  <div id="recommendations" class="rec-container" style="display: none;"></div>
   <footer class="footer">
     <div class="footer-inner">
         © 2026 Розроблено <a href = "https://github.com/Fitil4ik/MALytics" class="accent-footer" >MALytics Team</a>. Дані надані MyAnimeList.net
@@ -29,6 +37,9 @@
   const btn = document.getElementById('btnFetch');
   const status = document.getElementById('status');
   const result = document.getElementById('result');
+  const btnAnalyze = document.getElementById('btnAnalyze');
+  const recommendationsDiv = document.getElementById('recommendations');
+  let currentData = null;
 
   function extractUsername(value){
     value = value.trim();
@@ -44,7 +55,7 @@
     }
   }
 
-function renderList(data){
+  function renderList(data){
       result.innerHTML = '';
       if(!data) return;
       const header = document.createElement('div');
@@ -74,7 +85,11 @@ function renderList(data){
       
       ul.appendChild(fragment);
       result.appendChild(ul);
-    }
+  }
+
+  input.addEventListener('input', () => {
+      btnAnalyze.disabled = true;
+  });
 
   async function fetchList(){
     const raw = input.value;
@@ -82,6 +97,10 @@ function renderList(data){
     if(!username){ status.textContent = 'Введіть ім\'я профілю.'; return; }
     status.innerHTML = '<div class="spinner"></div> <span>Завантаження...</span>';
     result.innerHTML = '';
+    recommendationsDiv.style.display = 'none';
+    btnAnalyze.disabled = true;
+    currentData = null;
+
     try{
       const url = `http://127.0.0.1:8000/get_list?username=${encodeURIComponent(username)}`;
       const resp = await fetch(url);
@@ -90,13 +109,74 @@ function renderList(data){
         return;
       }
       const data = await resp.json();
+      currentData = data;
       status.textContent = '';
       renderList(data);
+      btnAnalyze.disabled = false;
     }catch(err){
       status.textContent = 'Помилка підключення. Переконайтесь, що запущено backend.';
       console.error(err);
     }
   }
+
+  async function translateText(text) {
+      if (!text || text === 'Опис відсутній.') return text;
+      try {
+          const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=uk&dt=t&q=${encodeURIComponent(text)}`);
+          const data = await res.json();
+          return data[0].map(item => item[0]).join('');
+      } catch(e) {
+          console.error('Translation error', e);
+          return text;
+      }
+  }
+
+  btnAnalyze.addEventListener('click', async () => {
+    if(!currentData || !currentData.recommendations) return;
+    
+    const originalBtnText = btnAnalyze.innerHTML;
+    btnAnalyze.innerHTML = '<div class="spinner"></div> <span>Завантаження...</span>';
+    btnAnalyze.disabled = true;
+
+    recommendationsDiv.style.display = 'block';
+    recommendationsDiv.innerHTML = `<h2 class="rec-title"><span>///</span> Персональні рекомендації</h2>`;
+    
+    const grid = document.createElement('div');
+    grid.className = 'rec-grid';
+    
+    for (const item of currentData.recommendations) {
+        const translatedSynopsis = await translateText(item.synopsis);
+        const translatedGenres = (item.genres || []).map(g => 
+            (typeof genreTranslations !== 'undefined' && genreTranslations[g]) ? genreTranslations[g] : g
+        );
+        const tagsHtml = translatedGenres.slice(0, 3).map(g => `<span class="rec-tag">${g}</span>`).join('');
+
+        const card = document.createElement('div');
+        card.className = 'rec-card';
+        card.innerHTML = `
+            <div class="rec-img-wrapper">
+                <img src="${item.picture}" alt="${item.title}">
+                <div class="rec-badge-left">#${item.rank}</div>
+                <div class="rec-badge">${Math.round((item.matchScore / 25) * 100)}% Збіг</div>
+            </div>
+            <div class="rec-content">
+                <div class="rec-tags">${tagsHtml}</div>
+                <h3 class="rec-title-card">${item.title}</h3>
+                <p class="rec-desc" title="${translatedSynopsis}">${translatedSynopsis}</p>
+                <a href="https://myanimelist.net/anime/${item.id}" target="_blank" class="rec-link">
+                    Дивитися на MAL
+                    <i class="ph-bold ph-arrow-square-out" style="font-size: 1.25rem;"></i>
+                </a>
+            </div>
+        `;
+        grid.appendChild(card);
+    }
+    
+    recommendationsDiv.appendChild(grid);
+    recommendationsDiv.scrollIntoView({ behavior: 'smooth' });
+    
+    btnAnalyze.innerHTML = originalBtnText;
+  });
 
   btn.addEventListener('click', fetchList);
   input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') fetchList(); });
