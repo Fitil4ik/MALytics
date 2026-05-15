@@ -1,0 +1,21 @@
+const langEN = {
+    subtitle: "Personal recommendations based on MAL profile",
+    placeholder: "Enter MAL username",
+    btnFetch: "Fetch",
+    btnAnalyze: "Analyze",
+    typeAnime: "Anime",
+    typeManga: "Manga",
+    profile: "Profile",
+    found: "found",
+    enterUsernameError: "Enter profile username.",
+    loading: "Loading...",
+    serverError: "Server error",
+    connectionError: "Connection error. Make sure backend is running.",
+    analyzing: "Analyzing...",
+    noRecsError: "Could not generate recommendations for this profile.",
+    personalRecs: "Personal recommendations",
+    match: "Match",
+    watchOnMAL: "Check out on MAL",
+    recFetchError: "An error occurred while fetching recommendations.",
+    footerText: "© 2026 Developed by <a href='https://github.com/Fitil4ik/MALytics' class='accent-footer'>MALytics Team</a>. Data provided by MyAnimeList.net"
+};

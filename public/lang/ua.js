@@ -1,3 +1,25 @@
+const langUA = {
+    subtitle: "Персональні рекомендації на основі профілю MAL",
+    placeholder: "Встав нікнейм MAL",
+    btnFetch: "Отримати",
+    btnAnalyze: "Проаналізувати",
+    typeAnime: "Аніме",
+    typeManga: "Манга",
+    profile: "Профіль",
+    found: "знайдено",
+    enterUsernameError: "Введіть ім'я профілю.",
+    loading: "Завантаження...",
+    serverError: "Помилка сервера",
+    connectionError: "Помилка підключення. Переконайтесь, що запущено backend.",
+    analyzing: "Аналіз...",
+    noRecsError: "Не вдалося сформувати рекомендації для цього профілю.",
+    personalRecs: "Персональні рекомендації",
+    match: "Збіг",
+    watchOnMAL: "Дивитися на MAL",
+    recFetchError: "Сталася помилка при отриманні рекомендацій.",
+    footerText: "© 2026 Розроблено <a href = 'https://github.com/Fitil4ik/MALytics' class='accent-footer'>MALytics Team</a>. Дані надані MyAnimeList.net. "
+};
+
 const genreTranslations = {
     "Action": "Бойовик",
     "Adventure": "Пригоди",

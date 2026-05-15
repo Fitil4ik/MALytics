@@ -6,40 +6,43 @@
   <title>MALytics</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="lang/en.js"></script>
+  <script src="lang/ua.js"></script>
 </head>
 <body>
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+    <button class="lang-btn" data-lang="ua" onclick="setLanguage('ua')">UA</button>
+  </div>
   <main class="container">
     <h1>MAL<span>ytics</span></h1>
-    <p class="hint">Персональні рекомендації аніме на основі твого профілю MyAnimeList</p>
+    <p class="hint" lang="subtitle"></p>
      <div class="type-toggle">
         <input type="radio" id="type-anime" name="search_type" value="anime" checked>
         <input type="radio" id="type-manga" name="search_type" value="manga">
-        <label for="type-anime">Аніме</label>
-        <label for="type-manga">Манга</label>
+        <label for="type-anime" lang="typeAnime"></label>
+        <label for="type-manga" lang="typeManga"></label>
         <div class="slider"></div>
     </div>
 
     <div class="form-row">
-      <input id="inputUser" type="text" placeholder="Встав посилання на профіль або нікнейм MAL">
-      <button id="btnFetch">Отримати</button>
+      <input id="inputUser" type="text" lang="placeholder">
+       <button id="btnFetch" lang="btnFetch"></button>
     </div>
     <div id="status" class="status"></div>
     <div id="result" class="result"></div>
     <div class="analyze-container">
         <button id="btnAnalyze" class="btn-analyze" disabled>
             <i class="ph-fill ph-flask pulse-icon"></i>
-            Проаналізувати
+            <span lang="btnAnalyze"></span>
         </button>
     </div>
   </main>
   <div id="recommendations" class="rec-container" style="display: none;"></div>
   <footer class="footer">
-    <div class="footer-inner">
-        © 2026 Розроблено <a href = "https://github.com/Fitil4ik/MALytics" class="accent-footer" >MALytics Team</a>. Дані надані MyAnimeList.net
-    </div>
-</footer>
+    <div class="footer-inner" lang="footerText"></div>
+  </footer>
 
-  <script src="/lang/ua.js"></script>
   <script>
   const input = document.getElementById('inputUser');
   const btn = document.getElementById('btnFetch');
@@ -70,6 +73,47 @@
       });
   });
 
+  const translations = {
+    en: typeof langEN !== 'undefined' ? langEN : {},
+    ua: typeof langUA !== 'undefined' ? langUA : {}
+  };
+
+  let currentLang = localStorage.getItem('site_lang') || 'en';
+  function t(key) {
+      return translations[currentLang][key] || ke
+      y;
+  }
+  function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('site_lang', lang);
+    document.documentElement.lang = lang;
+    const dictionary = translations[lang];
+    document.querySelectorAll('[lang]:not(html)').forEach(el => {
+        const key = el.getAttribute('lang');
+        if (dictionary[key]) {
+            if (el.tagName === 'INPUT') {
+                el.placeholder = dictionary[key];
+            } else {
+                el.innerHTML = dictionary[key];
+            }
+        }
+    });
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        if (btn.getAttribute('data-lang') === lang) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    if (currentData) renderList(currentData);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setLanguage(currentLang);
+  });
+
   function extractUsername(value){
     value = value.trim();
     if(!value) return '';
@@ -84,12 +128,12 @@
     }
   }
 
-  function renderList(data){
+function renderList(data){
       result.innerHTML = '';
       if(!data) return;
       const header = document.createElement('div');
       header.className = 'summary';
-      header.textContent = `Профіль: ${data.username} — знайдено: ${data.total}`;
+      header.textContent = `${t('profile')}: ${data.username} — ${t('found')}: ${data.total}`;
       result.appendChild(header);
       const ul = document.createElement('ul');
       ul.className = 'anime-list';
@@ -98,14 +142,17 @@
       const sortlist = [...data.list].sort((a,b) => b.score - a.score);
       
       sortlist.forEach(item => {
-        const translatedGenres = (item.genres || []).map(g => 
-            (typeof genreTranslations !== 'undefined' && genreTranslations[g]) ? genreTranslations[g] : g
-        );
+        const displayGenres = (item.genres || []).map(g => {
+            if (currentLang === 'ua' && typeof genreTranslations !== 'undefined' && genreTranslations[g]) {
+                return genreTranslations[g];
+            }
+            return g; 
+        });
         const li = document.createElement('li');
         li.innerHTML = `
           <div>
             <strong>${item.title}</strong>
-            <span class="genres">${translatedGenres.join(', ')}</span>
+            <span class="genres">${displayGenres.join(', ')}</span>
           </div>
           <span class="score-badge">${item.score}/10</span>
         `;
@@ -123,8 +170,8 @@
   async function fetchList(){
     const raw = input.value;
     const username = extractUsername(raw);
-    if(!username){ status.textContent = 'Введіть ім\'я профілю.'; return; }
-    status.innerHTML = '<div class="spinner"></div> <span>Завантаження...</span>';
+    if(!username){ status.textContent = t('enterUsernameError'); return; }
+    status.innerHTML = `<div class="spinner"></div><span>${t('loading')}</span>`;
     result.innerHTML = '';
     recommendationsDiv.style.display = 'none';
     btnAnalyze.disabled = true;
@@ -134,7 +181,7 @@
       const url = `http://127.0.0.1:8000/get_list?username=${encodeURIComponent(username)}&type=${currentType}`;
       const resp = await fetch(url);
       if(!resp.ok){
-        status.textContent = `Помилка сервера: ${resp.status}`;
+        status.textContent = `${t('serverError')}: ${resp.status}`;
         return;
       }
       const data = await resp.json();
@@ -143,13 +190,14 @@
       renderList(data);
       btnAnalyze.disabled = false;
     }catch(err){
-      status.textContent = 'Помилка підключення. Переконайтесь, що запущено backend.';
+      status.textContent = t('connectionError');
       console.error(err);
     }
   }
 
   async function translateText(text) {
       if (!text || text === 'Опис відсутній.') return text;
+      if (currentLang === 'en') return text;
       try {
           const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=uk&dt=t&q=${encodeURIComponent(text)}`);
           const data = await res.json();
@@ -164,7 +212,7 @@
     if(!currentData || !currentData.username) return;
     
     const originalBtnText = btnAnalyze.innerHTML;
-    btnAnalyze.innerHTML = '<div class="spinner"></div> <span>Аналіз...</span>';
+    btnAnalyze.innerHTML = `<div class="spinner"></div> <span>${t('analyzing')}</span>`;
     btnAnalyze.disabled = true;
 
     recommendationsDiv.style.display = 'none';
@@ -173,30 +221,33 @@
         const url = `http://127.0.0.1:8000/get_recommendations?username=${encodeURIComponent(currentData.username)}&type=${currentType}`;
         const resp = await fetch(url);
         
-        if (!resp.ok) throw new Error('Помилка сервера');
+        if (!resp.ok) throw new Error('Server error');
         
         const data = await resp.json();
         const recs = data.recommendations;
 
         if (!recs || recs.length === 0) {
-            alert('Не вдалося сформувати рекомендації для цього профілю.');
+            alert(t('noRecsError'));
             btnAnalyze.innerHTML = originalBtnText;
             btnAnalyze.disabled = false;
             return;
         }
 
         recommendationsDiv.style.display = 'block';
-        recommendationsDiv.innerHTML = `<h2 class="rec-title"><span>///</span> Персональні рекомендації</h2>`;
+        recommendationsDiv.innerHTML = `<h2 class="rec-title"><span>///</span> ${t('personalRecs')}</h2>`;
         
         const grid = document.createElement('div');
         grid.className = 'rec-grid';
         
         for (const item of recs) {
-            const translatedSynopsis = await translateText(item.synopsis);
-            const translatedGenres = (item.genres || []).map(g => 
-                (typeof genreTranslations !== 'undefined' && genreTranslations[g]) ? genreTranslations[g] : g
-            );
-            const tagsHtml = translatedGenres.slice(0, 3).map(g => `<span class="rec-tag">${g}</span>`).join('');
+            const translatedSynopsis = await translateText(item.synopsis);            
+            const displayGenres = (item.genres || []).map(g => {
+                if (currentLang === 'ua' && typeof genreTranslations !== 'undefined' && genreTranslations[g]) {
+                    return genreTranslations[g];
+                }
+                return g;
+            });
+            const tagsHtml = displayGenres.slice(0, 3).map(g => `<span class="rec-tag">${g}</span>`).join('');
 
             const card = document.createElement('div');
             card.className = 'rec-card';
@@ -204,14 +255,14 @@
                 <div class="rec-img-wrapper">
                     <img src="${item.picture}" alt="${item.title}">
                     <div class="rec-badge-left">#${item.rank}</div>
-                    <div class="rec-badge">${Math.round((item.matchScore / 25) * 100)}% Збіг</div>
+                    <div class="rec-badge">${Math.round((item.matchScore / 25) * 100)}% ${t('match')}</div>
                 </div>
                 <div class="rec-content">
                     <div class="rec-tags">${tagsHtml}</div>
                     <h3 class="rec-title-card">${item.title}</h3>
                     <p class="rec-desc" title="${translatedSynopsis}">${translatedSynopsis}</p>
                     <a href="https://myanimelist.net/${currentType}/${item.id}" target="_blank" class="rec-link">
-                        Дивитися на MAL
+                        ${t('watchOnMAL')}
                     <i class="ph-bold ph-arrow-square-out" style="font-size: 1.25rem;"></i>
                     </a>
                 </div>
@@ -224,7 +275,7 @@
 
     } catch (error) {
         console.error(error);
-        alert("Сталася помилка при отриманні рекомендацій.");
+        alert(t('recFetchError'));
     } finally {
         btnAnalyze.innerHTML = originalBtnText;
         btnAnalyze.disabled = false;
