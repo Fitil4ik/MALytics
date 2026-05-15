@@ -2,7 +2,7 @@
 
 @font-face {
     font-family: 'Revue';
-    src: local('Revue'), url('../fonts/Revue.woff2') format('woff2');
+    src: url('/fonts/Revue.woff2') format('woff2');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -11,11 +11,45 @@
 :root {
     --dark-bg: #121826;
     --card-bg: #1F2937;
-    --accent: #06B6D4;
+    --accent: #06B6D4; 
+    --accent-dark: #0891B2;
+    --accent-gradient: linear-gradient(to right, #06B6D4, #2563EB);
+    --accent-gradient-hover: linear-gradient(to right, #0891B2, #1D4ED8);
+    --tag-bg: rgba(6, 182, 212, 0.2);
+    --tag-text: #67E8F9;
+    --score-bg: #1E3A8A;
+    --score-text: #BFDBFE;
     --text-main: #F3F4F6;
     --text-muted: #9CA3AF;
     --border: #374151;
+    --transition-colors: all 0.4s ease;
 }
+
+body.theme-manga {
+    --accent: #ff852e; 
+    --accent-dark: #EA580C;
+    --accent-gradient: linear-gradient(to right, #ff852e, #e27032);
+    --accent-gradient-hover: linear-gradient(to right, #EA580C, #b94e1c);
+    --tag-bg: rgba(249, 115, 22, 0.2);
+    --tag-text: #FDBA74;
+    --score-bg: #7C2D12;
+    --score-text: #FED7AA;
+}
+
+h1 span, 
+button, 
+.type-toggle .slider,
+.accent-footer,
+.rec-badge,
+.rec-title span,
+.rec-link,
+.rec-title-card,
+.rec-tag,
+.score-badge {
+    transition: var(--transition-colors);
+}
+
+
 
 body {
     background-color: var(--dark-bg);
@@ -58,6 +92,55 @@ h1 span {
     font-size: 1.125rem;
     margin-bottom: 3rem;
 }
+.type-toggle {
+    display: flex;
+    background-color: var(--card-bg);
+    border-radius: 99px;
+    padding: 4px;
+    margin-bottom: 1rem;
+    position: relative;
+    width: 240px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.type-toggle input[type="radio"] {
+    display: none;
+}
+
+.type-toggle label {
+    flex: 1;
+    text-align: center;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 2;
+    transition: color 0.3s ease;
+}
+
+.type-toggle .slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background-color: var(--accent);
+    border-radius: 99px;
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.4s ease;
+}
+
+#type-manga:checked ~ .slider {
+    transform: translateX(100%);
+}
+
+#type-anime:checked ~ label[for="type-anime"],
+#type-manga:checked ~ label[for="type-manga"] {
+    color: #fff;
+}
 
 .form-row {
     background-color: var(--card-bg);
@@ -83,26 +166,66 @@ input::placeholder {
     color: #6B7280;
 }
 
-button#btnFetch {
-    background: linear-gradient(to right, var(--accent), #2563EB);
+button#btnFetch, .btn-analyze {
+    position: relative;
+    background: linear-gradient(to right, #06B6D4, #2563EB);
     color: white;
     border: none;
-    padding: 0.75rem 2rem;
     border-radius: 9999px;
     font-weight: 700;
     cursor: pointer;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+    z-index: 1;
 }
 
-button#btnFetch:hover {
-    background: linear-gradient(to right, #0891B2, #1D4ED8);
+button#btnFetch { padding: 0.75rem 2rem; }
+.btn-analyze { 
+    padding: 1rem 3rem; 
+    display: flex; 
+    align-items: center; 
+    gap: 0.75rem; 
+}
+
+button#btnFetch::before, .btn-analyze::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, #ff852e, #e27032);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: -1;
+}
+
+body.theme-manga button#btnFetch::before, 
+body.theme-manga .btn-analyze::before {
+    opacity: 1;
+}
+
+button#btnFetch:hover, .btn-analyze:hover:not(:disabled) {
     transform: scale(1.02);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
 }
 
-button#btnFetch:active {
+button#btnFetch:hover::before, .btn-analyze:hover:not(:disabled)::before {
+    filter: brightness(1.1);
+}
+
+button#btnFetch:active, .btn-analyze:active:not(:disabled) {
     transform: scale(0.95);
+}
+
+.btn-analyze:disabled {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+.btn-analyze:disabled::before {
+    opacity: 0 !important;
 }
 
 .result {
@@ -147,12 +270,13 @@ button#btnFetch:active {
 }
 
 .score-badge {
-    background-color: #1E3A8A;
-    color: #BFDBFE;
+    background-color: var(--score-bg);
+    color: var(--score-text);
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
     font-weight: 700;
     font-size: 0.875rem;
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 .genres {
@@ -163,93 +287,10 @@ button#btnFetch:active {
     margin-top: 0.25rem;
 }
 
- .status {
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--text-muted);
-    font-size: 1rem;
-    min-height: 2.5rem;
-}
-
-.spinner {
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(6, 182, 212, 0.2);
-    border-top: 3px solid var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.footer {
-    flex: 0 0 auto;
-    width: 100%;
-    background-color: var(--card-bg);
-    border-top: 1px solid var(--border);
-    padding: 1.5rem 0;
-    margin-top: 4rem;
-}
-
-.footer-inner {
-    max-width: 672px;
-    margin: 0 auto;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.accent-footer {
-    color: var(--accent);
-    font-weight: 600;
-}
-
 .analyze-container {
     margin-top: 2rem;
     display: flex;
     justify-content: center;
-}
-
-.btn-analyze {
-    background: linear-gradient(to right, var(--accent), #2563EB);
-    color: white;
-    font-weight: 700;
-    padding: 1rem 3rem;
-    border-radius: 9999px;
-    cursor: pointer;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.btn-analyze:hover:not(:disabled) {
-    background: linear-gradient(to right, #0891B2, #1D4ED8);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-    transform: translateY(-4px);
-}
-
-.btn-analyze:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.btn-analyze:disabled {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
 }
 
 .pulse-icon {
@@ -328,7 +369,7 @@ button#btnFetch:active {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background-color: #10B981;
+    background-color: var(--accent);
     color: white;
     font-size: 0.75rem;
     font-weight: 700;
@@ -342,7 +383,7 @@ button#btnFetch:active {
     top: 1rem;
     left: 1rem;
     background-color: #FBBF24;
-    color: white;
+    color: #1F2937;
     font-size: 0.75rem;
     font-weight: 700;
     padding: 0.25rem 0.75rem;
@@ -370,8 +411,9 @@ button#btnFetch:active {
     font-weight: 600;
     padding: 0.125rem 0.625rem;
     border-radius: 0.25rem;
-    background: rgba(6, 182, 212, 0.2); 
-    color: #67E8F9;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 .rec-title-card {
@@ -379,7 +421,6 @@ button#btnFetch:active {
     font-weight: 700;
     margin: 0 0 0.75rem 0;
     line-height: 1.2;
-    transition: color 0.2s;
 }
 
 .rec-card:hover .rec-title-card {
@@ -410,53 +451,91 @@ button#btnFetch:active {
     border-top: 1px solid var(--border);
 }
 
-.rec-link:hover { text-decoration: underline; }
+.rec-link:hover { 
+    text-decoration: underline; 
+    color: var(--accent-dark);
+}
 
-.type-toggle {
-    display: flex;
-    background-color: var(--card-bg);
-    border-radius: 99px;
-    padding: 4px;
+.status {
+    margin-top: 2rem;
     margin-bottom: 1rem;
-    position: relative;
-    width: 240px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.type-toggle input[type="radio"] {
-    display: none;
-}
-
-.type-toggle label {
-    flex: 1;
-    text-align: center;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     color: var(--text-muted);
-    cursor: pointer;
-    z-index: 2;
-    transition: color 0.3s ease;
+    font-size: 1rem;
+    min-height: 2.5rem;
 }
 
-.type-toggle .slider {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    width: calc(50% - 4px);
-    height: calc(100% - 8px);
-    background-color: var(--accent);
-    border-radius: 99px;
-    z-index: 1;
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(156, 163, 175, 0.2);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    transition: border-top-color 0.4s ease;
 }
 
-#type-manga:checked ~ .slider {
-    transform: translateX(100%);
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-#type-anime:checked ~ label[for="type-anime"],
-#type-manga:checked ~ label[for="type-manga"] {
-    color: #fff;
+.footer {
+    flex: 0 0 auto;
+    width: 100%;
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    margin-top: 4rem;
+}
+
+.footer-inner {
+    max-width: 672px;
+    margin: 0 auto;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.accent-footer {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+@media (max-width: 1200px) {
+    .rec-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .rec-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    h1 {
+        font-size: 3.5rem;
+    }
+    
+    .rec-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    button#btnFetch {
+        width: 100%;
+    }
+    
+    .rec-img-wrapper {
+        height: 18rem;
+    }
 }

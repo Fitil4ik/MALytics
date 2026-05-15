@@ -54,10 +54,16 @@
       defaultToggle.checked = true;
   }
   let currentType = 'anime';
+  document.body.classList.remove('theme-manga');
 
   document.querySelectorAll('input[name="search_type"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
           currentType = e.target.value;
+          if (currentType === 'manga') {
+              document.body.classList.add('theme-manga');
+          } else {
+              document.body.classList.remove('theme-manga');
+          }
           btnAnalyze.disabled = true;
           result.innerHTML = '';
           recommendationsDiv.style.display = 'none';

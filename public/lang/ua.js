@@ -76,5 +76,6 @@ const genreTranslations = {
     "Kids": "Для дітей",
     "Seinen": "Сейнен",
     "Shoujo": "Сьодзьо",
-    "Shounen": "Шонен"
+    "Shounen": "Шонен",
+    "Memoir": "Мемуари"
 };
