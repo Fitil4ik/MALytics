@@ -1,21 +1,26 @@
 const BiDirectionalPriorityQueue = require('./bdpq');
-function calcPref(allAnime) {
+function calcPref(allMedia) {
     const genreStats = {};
     let globalTotalScore = 0;
     let globalCount = 0;
 
-    allAnime.forEach(anime => {
-        if (!anime || typeof anime !== 'object') return;
-        const score = Number(anime.score) || 0;
-        if (score === 0) return;
-        globalTotalScore += score;
+    const ENABLE_DROPPED_PENALTY = true; 
+    allMedia.forEach(media => {
+        if (!media || typeof media !== 'object') return;
+        const baseScore = Number(media.score) || 0;
+        if (baseScore === 0) return;
+        let effectiveScore = baseScore;
+        if (ENABLE_DROPPED_PENALTY && media.status === 'dropped') {
+            effectiveScore = baseScore * 0.75; 
+        }
+        globalTotalScore += effectiveScore;
         globalCount++;
-        const genres = Array.isArray(anime.genres) ? anime.genres : [];
+        const genres = Array.isArray(media.genres) ? media.genres : [];
         genres.forEach(genre => {
             if (!genreStats[genre]) {
                 genreStats[genre] = { totalScore: 0, count: 0 };
             }
-            genreStats[genre].totalScore += score;
+            genreStats[genre].totalScore += effectiveScore;
             genreStats[genre].count += 1;
         });
     });

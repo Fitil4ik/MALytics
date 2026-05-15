@@ -11,6 +11,14 @@
   <main class="container">
     <h1>MAL<span>ytics</span></h1>
     <p class="hint">Персональні рекомендації аніме на основі твого профілю MyAnimeList</p>
+     <div class="type-toggle">
+        <input type="radio" id="type-anime" name="search_type" value="anime" checked>
+        <input type="radio" id="type-manga" name="search_type" value="manga">
+        <label for="type-anime">Аніме</label>
+        <label for="type-manga">Манга</label>
+        <div class="slider"></div>
+    </div>
+
     <div class="form-row">
       <input id="inputUser" type="text" placeholder="Встав посилання на профіль або нікнейм MAL">
       <button id="btnFetch">Отримати</button>
@@ -40,6 +48,21 @@
   const btnAnalyze = document.getElementById('btnAnalyze');
   const recommendationsDiv = document.getElementById('recommendations');
   let currentData = null;
+
+  const defaultToggle = document.getElementById('type-anime');
+  if (defaultToggle) {
+      defaultToggle.checked = true;
+  }
+  let currentType = 'anime';
+
+  document.querySelectorAll('input[name="search_type"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+          currentType = e.target.value;
+          btnAnalyze.disabled = true;
+          result.innerHTML = '';
+          recommendationsDiv.style.display = 'none';
+      });
+  });
 
   function extractUsername(value){
     value = value.trim();
@@ -102,7 +125,7 @@
     currentData = null;
 
     try{
-      const url = `http://127.0.0.1:8000/get_list?username=${encodeURIComponent(username)}`;
+      const url = `http://127.0.0.1:8000/get_list?username=${encodeURIComponent(username)}&type=${currentType}`;
       const resp = await fetch(url);
       if(!resp.ok){
         status.textContent = `Помилка сервера: ${resp.status}`;
@@ -141,7 +164,7 @@
     recommendationsDiv.style.display = 'none';
     
     try {
-        const url = `http://127.0.0.1:8000/get_recommendations?username=${encodeURIComponent(currentData.username)}`;
+        const url = `http://127.0.0.1:8000/get_recommendations?username=${encodeURIComponent(currentData.username)}&type=${currentType}`;
         const resp = await fetch(url);
         
         if (!resp.ok) throw new Error('Помилка сервера');
@@ -181,7 +204,7 @@
                     <div class="rec-tags">${tagsHtml}</div>
                     <h3 class="rec-title-card">${item.title}</h3>
                     <p class="rec-desc" title="${translatedSynopsis}">${translatedSynopsis}</p>
-                    <a href="https://myanimelist.net/anime/${item.id}" target="_blank" class="rec-link">
+                    <a href="https://myanimelist.net/${currentType}/${item.id}" target="_blank" class="rec-link">
                         Дивитися на MAL
                     <i class="ph-bold ph-arrow-square-out" style="font-size: 1.25rem;"></i>
                     </a>

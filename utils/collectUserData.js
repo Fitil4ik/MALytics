@@ -3,26 +3,26 @@ const getList = require('./getList');
 const calcPrefLogged = require('./calcPref');
 const { logger } = require('./logger');
 
-async function collectUserData(username, malClient) {
-    logger.info(`[collectUserData] Початок завантаження профілю: ${username}...`);
+async function collectUserData(username, malClient, type = 'anime') {
+    logger.info(`[collectUserData] Початок завантаження профілю: ${username} (${type})...`);
     const bdpq = new BiDirectionalPriorityQueue();
-    const allAnime = [];
+    const allMedia = [];
 
     try {
-        for await (const anime of getList(username, malClient)) {  
-            bdpq.enqueue(anime, anime.score);
-            allAnime.push(anime);
+        for await (const media of getList(username, malClient, type)) {  
+            bdpq.enqueue(media, media.score);
+            allMedia.push(media);
         }
         
-        logger.info(`[collectUserData] Успіх! Всього зібрано для ${username}: ${allAnime.length}.`);
+        logger.info(`[collectUserData] Успіх! Всього зібрано для ${username} (${type}): ${allMedia.length}.`);
         
-        const topGenres = await calcPrefLogged(allAnime);
+        const topGenres = await calcPrefLogged(allMedia);
         
         return {
             username: username,
-            total: allAnime.length,
+            total: allMedia.length,
             top_genres: topGenres,
-            list: allAnime,
+            list: allMedia,
             stats: {
                 highest_rated: bdpq.peek('highest') || null,
                 lowest_rated: bdpq.peek('lowest') || null,
