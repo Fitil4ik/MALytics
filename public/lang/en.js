@@ -17,5 +17,10 @@ const langEN = {
     match: "Match",
     watchOnMAL: "Check out on MAL",
     recFetchError: "An error occurred while fetching recommendations.",
-    footerText: "© 2026 Developed by <a href='https://github.com/Fitil4ik/MALytics' class='accent-footer'>MALytics Team</a>. Data provided by MyAnimeList.net"
+    footerText: "© 2026 Developed by <a href='https://github.com/Fitil4ik/MALytics' class='accent-footer'>MALytics Team</a>. Data provided by MyAnimeList.net",
+    errorTitle: "An error occurred",
+    emptyListTitle: "List is empty",
+    emptyListDesc: "We found this profile, but there are no titles in it. Add something to your list on MAL and try again!",
+    gotIt: "Got it",
+    profileNotFound: "Perhaps the profile does not exist."
 };

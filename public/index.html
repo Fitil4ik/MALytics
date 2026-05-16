@@ -43,6 +43,19 @@
     <div class="footer-inner" lang="footerText"></div>
   </footer>
 
+  <div id="errorModal" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+          <div class="modal-text">
+              <h3 id="modalTitle">Помилка</h3>
+              <p id="modalDesc">Опис помилки</p>
+              <button id="modalCloseBtn" class="modal-btn" lang="gotIt"></button>
+          </div>
+          <div class="modal-image-wrapper">
+              <img id="modalImg" src="" alt="Error Mascot">
+          </div>
+      </div>
+  </div>
+
   <script>
   const input = document.getElementById('inputUser');
   const btn = document.getElementById('btnFetch');
@@ -51,6 +64,23 @@
   const btnAnalyze = document.getElementById('btnAnalyze');
   const recommendationsDiv = document.getElementById('recommendations');
   let currentData = null;
+
+  const errorModal = document.getElementById('errorModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalDesc = document.getElementById('modalDesc');
+  const modalImg = document.getElementById('modalImg');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+  function showErrorModal(title, desc, imgUrl) {
+      modalTitle.textContent = title;
+      modalDesc.textContent = desc;
+      modalImg.src = imgUrl; 
+      errorModal.style.display = 'flex';
+  }
+
+  modalCloseBtn.addEventListener('click', () => {
+      errorModal.style.display = 'none';
+  });
 
   const defaultToggle = document.getElementById('type-anime');
   if (defaultToggle) {
@@ -80,8 +110,7 @@
 
   let currentLang = localStorage.getItem('site_lang') || 'en';
   function t(key) {
-      return translations[currentLang][key] || ke
-      y;
+      return translations[currentLang][key] || key;
   }
   function setLanguage(lang) {
     currentLang = lang;
@@ -182,16 +211,25 @@ function renderList(data){
       const url = `${window.location.origin}/get_list?username=${encodeURIComponent(username)}&type=${currentType}`;
       const resp = await fetch(url);
       if(!resp.ok){
-        status.textContent = `${t('serverError')}: ${resp.status}`;
+        status.textContent = '';
+        showErrorModal(t('errorTitle'), `${t('serverError')}: ${resp.status}. ${t('profileNotFound')}`, 'https://res.cloudinary.com/dpu7hpxua/image/upload/v1778942757/2_krchew.png'); 
         return;
       }
       const data = await resp.json();
+
+      if(!data.list || data.list.length === 0) {
+          status.textContent = '';
+          showErrorModal(t('emptyListTitle'), t('emptyListDesc'), 'https://res.cloudinary.com/dpu7hpxua/image/upload/v1778942757/2_krchew.png'); 
+          return;
+      }
+
       currentData = data;
       status.textContent = '';
       renderList(data);
       btnAnalyze.disabled = false;
     }catch(err){
-      status.textContent = t('connectionError');
+      status.textContent = '';
+      showErrorModal(t('errorTitle'), t('connectionError'), 'https://res.cloudinary.com/dpu7hpxua/image/upload/v1778942757/2_krchew.png');
       console.error(err);
     }
   }
@@ -228,7 +266,7 @@ function renderList(data){
         const recs = data.recommendations;
 
         if (!recs || recs.length === 0) {
-            alert(t('noRecsError'));
+            showErrorModal(t('errorTitle'), t('noRecsError'), 'https://res.cloudinary.com/dpu7hpxua/image/upload/v1778942757/2_krchew.png'); 
             btnAnalyze.innerHTML = originalBtnText;
             btnAnalyze.disabled = false;
             return;
@@ -239,6 +277,7 @@ function renderList(data){
         
         const grid = document.createElement('div');
         grid.className = 'rec-grid';
+        let index = 0; 
         
         for (const item of recs) {
             const translatedSynopsis = await translateText(item.synopsis);            
@@ -252,6 +291,8 @@ function renderList(data){
 
             const card = document.createElement('div');
             card.className = 'rec-card';
+            card.style.animationDelay = `${index * 0.08}s`;
+            index++;
             card.innerHTML = `
                 <div class="rec-img-wrapper">
                     <img src="${item.picture}" alt="${item.title}">
@@ -276,7 +317,7 @@ function renderList(data){
 
     } catch (error) {
         console.error(error);
-        alert(t('recFetchError'));
+        showErrorModal(t('errorTitle'), t('recFetchError'), 'https://res.cloudinary.com/dpu7hpxua/image/upload/v1778942757/2_krchew.png');
     } finally {
         btnAnalyze.innerHTML = originalBtnText;
         btnAnalyze.disabled = false;

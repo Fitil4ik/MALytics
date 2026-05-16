@@ -17,7 +17,12 @@ const langUA = {
     match: "Збіг",
     watchOnMAL: "Дивитися на MAL",
     recFetchError: "Сталася помилка при отриманні рекомендацій.",
-    footerText: "© 2026 Розроблено <a href = 'https://github.com/Fitil4ik/MALytics' class='accent-footer'>MALytics Team</a>. Дані надані MyAnimeList.net. "
+    footerText: "© 2026 Розроблено <a href = 'https://github.com/Fitil4ik/MALytics' class='accent-footer'>MALytics Team</a>. Дані надані MyAnimeList.net. ",
+    errorTitle: "Сталася помилка",
+    emptyListTitle: "Список порожній",
+    emptyListDesc: "Ми знайшли цей профіль, але у ньому немає жодного тайтла. Дodайте щось до списку на MAL і спробуйте знову!",
+    gotIt: "Зрозуміло",
+    profileNotFound: "Можливо, профіль не існує."
 };
 
 const genreTranslations = {

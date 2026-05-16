@@ -8,7 +8,7 @@ async function collectUserData(username, malClient, type = 'anime') {
     const bdpq = new BiDirectionalPriorityQueue();
     const allMedia = [];
 
-   let userpicture = null;
+   let userPicture = null;
    try {
             const jikanRes = await fetch(`https://api.jikan.moe/v4/users/${username}`);
             if (jikanRes.ok) {
