@@ -5,6 +5,7 @@ async function* getList(username, malClient, type = 'anime') {
     let currentUrl = `https://api.myanimelist.net/v2/users/${username}/${type}list`;
     let params = {
         limit: 100,
+        nsfw: true,
         fields: 'list_status{score,status},genres,alternative_titles'
     };
 

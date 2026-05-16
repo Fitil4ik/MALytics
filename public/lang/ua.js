@@ -99,5 +99,6 @@ const genreTranslations = {
     "Seinen": "Сейнен",
     "Shoujo": "Сьодзьо",
     "Shounen": "Шонен",
-    "Memoir": "Мемуари"
+    "Memoir": "Мемуари",
+    "Eligible Titles for You Should Read This": "Вибір MAL"
 };

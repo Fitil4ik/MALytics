@@ -178,7 +178,7 @@ function renderList(data){
     currentData = null;
 
     try{
-      const url = `http://127.0.0.1:8000/get_list?username=${encodeURIComponent(username)}&type=${currentType}`;
+      const url = `${window.location.origin}/get_list?username=${encodeURIComponent(username)}&type=${currentType}`;
       const resp = await fetch(url);
       if(!resp.ok){
         status.textContent = `${t('serverError')}: ${resp.status}`;
@@ -218,7 +218,7 @@ function renderList(data){
     recommendationsDiv.style.display = 'none';
     
     try {
-        const url = `http://127.0.0.1:8000/get_recommendations?username=${encodeURIComponent(currentData.username)}&type=${currentType}`;
+        const url = `${window.location.origin}/get_recommendations?username=${encodeURIComponent(currentData.username)}&type=${currentType}`;
         const resp = await fetch(url);
         
         if (!resp.ok) throw new Error('Server error');
