@@ -133,7 +133,8 @@ function renderList(data){
       if(!data) return;
       const header = document.createElement('div');
       header.className = 'summary';
-      header.textContent = `${t('profile')}: ${data.username} — ${t('found')}: ${data.total}`;
+      const avatarHtml = data.picture ? `<img src="${data.picture}" alt="Avatar" class="profile-avatar">` : '';
+      header.innerHTML = `<span class="summary-inline">${t('profile')}: ${avatarHtml} <strong>${data.username}</strong> — ${t('found')}: ${data.total}</span>`;
       result.appendChild(header);
       const ul = document.createElement('ul');
       ul.className = 'anime-list';
