@@ -38,9 +38,14 @@ async function getRecommendations(username, userList, userTopGenres, top1000Data
     logger.debug(`[getRecommendations] Починаємо перевірку сиквелів для ${username} (${type})...`);
     const relatedField = type === 'manga' ? 'related_manga' : 'related_anime';
 
-    for (const item of candidates) {
-        if (finalRecommendations.length >= 5) break;
+const BATCH_SIZE = 5;
 
+for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
+    if (finalRecommendations.length >= 5) break;
+
+    const batch = candidates.slice(i, i + BATCH_SIZE);
+    
+    const batchResults = await Promise.all(batch.map(async (item) => {
         try {
             const response = await withRetry(() => proxyClient.request({
                 url: `https://api.myanimelist.net/v2/${type}/${item.id}?fields=${relatedField}`,
@@ -48,34 +53,32 @@ async function getRecommendations(username, userList, userTopGenres, top1000Data
             }), 2, 1000);
 
             const details = response.data && response.data[relatedField] ? response.data : response;
-            
             let hasUnseenPrequel = false;
 
             if (details && details[relatedField]) {
-                for (const rel of details[relatedField]) {
-                    if (['prequel', 'parent_story', 'full_story'].includes(rel.relation_type)) {
-                        const relId = Number(rel.node.id);
-                        if (!watchedIds.has(relId)) {
-                            hasUnseenPrequel = true;
-                            break;
-                        }
-                    }
-                }
+                hasUnseenPrequel = details[relatedField].some(rel => 
+                    ['prequel', 'parent_story', 'full_story'].includes(rel.relation_type) && 
+                    !watchedIds.has(Number(rel.node.id))
+                );
             }
-
-            if (hasUnseenPrequel) {
-                logger.debug(`[getRecommendations] Відкинуто: ${item.title}`);
-                continue; 
-            }
-
-            logger.debug(`[getRecommendations] Схвалено: ${item.title}`);
-            finalRecommendations.push(item);
-
+            
+            return { item, hasUnseenPrequel, success: true };
         } catch (error) {
             logger.error(`[getRecommendations] Помилка перевірки ${item.title}: ${error.message}`);
-            continue; 
+            return { item, success: false };
+        }
+    }));
+
+    for (const res of batchResults) {
+        if (res.success && !res.hasUnseenPrequel) {
+            logger.debug(`[getRecommendations] Схвалено: ${res.item.title}`);
+            finalRecommendations.push(res.item);
+            if (finalRecommendations.length >= 5) break; 
+        } else if (res.success) {
+            logger.debug(`[getRecommendations] Відкинуто (є приквел): ${res.item.title}`);
         }
     }
+}
     logger.info(`[getRecommendations] Рекомендації для ${username} сформовано.`);
     return finalRecommendations;
 }
