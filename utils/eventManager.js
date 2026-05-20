@@ -29,10 +29,6 @@ eventBus.on('error', (err) => {
     logger.error(`[EventBus] Помилка в одному зі слухачів: ${err.message}`);
 });
 
-eventBus.on('error', (err) => {
-    logger.error(`[EventBus] Помилка в одному зі слухачів: ${err.message}`);
-});
-
 function updateCache({ username, responseData, cache }) {
     cache.set(username, { data: responseData, timestamp: Date.now() });
     logger.debug(`[GetCache] Дані для ${username} успішно збережено в кеш.`);
